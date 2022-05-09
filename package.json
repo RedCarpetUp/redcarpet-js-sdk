@@ -1,0 +1,12 @@
+{
+  "name": "redcarpetup-sdk",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "Redcarpet Tech",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "^0.27.2",
+    "crypto-js": "^4.1.1",
+    "moment": "^2.29.3"
+  }
+}
