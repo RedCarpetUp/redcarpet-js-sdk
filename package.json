@@ -1,10 +1,10 @@
 {
   "name": "redcarpetup-sdk",
-  "version": "1.0.1",
+  "version": "1.1.1",
   "main": "dist/index.js",
-  "source":"lib/index.js",
-  "module":"dist/index.m.js",
-  "unpkg":"dist/index.umd.js",
+  "source": "lib/index.js",
+  "module": "dist/index.m.js",
+  "unpkg": "dist/index.umd.js",
   "author": "Redcarpet Tech",
   "license": "MIT",
   "dependencies": {
@@ -18,7 +18,7 @@
     "lib": "lib"
   },
   "scripts": {
-"build":"rm -rf dist && microbundle"
+    "build": "rm -rf dist && microbundle"
   },
   "repository": {
     "type": "git",
