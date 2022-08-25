@@ -7,8 +7,8 @@ const moment = require('moment');
 
 class Base{
     constructor(options={}){
-        const {phone,accessToken,resourceId,appVersion}=options
-        this.BASE_URL = "https://api.redcarpetup.com";
+        const {phone,accessToken,resourceId,appVersion,devMode}=options
+        this.BASE_URL = devMode?"https://apicherry-v3.redcarpetup.com/":"https://api.redcarpetup.com/";
         this.phone=phone;
         this.accessToken=accessToken;
         this.resourceId=resourceId;
@@ -131,8 +131,8 @@ class Base{
 class RedcarpetUpAPI extends Base{
     constructor(options){
         super(options)
-        const {apiKey, productType, appVersion}=options;
-        this.BASE_URL = "https://api.redcarpetup.com";
+        const {apiKey, productType, appVersion,devMode}=options;
+        this.BASE_URL = devMode?"https://apicherry-v3.redcarpetup.com/":"https://api.redcarpetup.com/";
         this.resourceId = apiKey || '';
         this.productType = productType || '';
         this.appVersion = appVersion || '';
@@ -245,7 +245,7 @@ class RedcarpetUpAPI extends Base{
     };
 
 
-    verifyAadhaarCardOtp = function ({ phone, accessToken, otp, aadhaarNumber, clientId }) {
+    verifyAadhaarCardOtp = function ({ phone, accessToken, otp, aadharNumber, clientId }) {
         return this.callApi(
             `/verify_aadhar_id_${this.productType}`,
             "POST",
@@ -253,14 +253,14 @@ class RedcarpetUpAPI extends Base{
                 otp: otp,
                 type: "verify",
                 client_id: clientId,
-                aadhar_no: aadhaarNumber,
+                aadhar_no: aadharNumber,
             },
             phone,
             accessToken
         );
     }
 
-    generateAadhaarOtpToVerify = function ({ phone, accessToken, aadhaarNumber, pincode, work, email, addressType }) {
+    generateAadhaarOtpToVerify = function ({ phone, accessToken, aadharNumber, pincode, work, email, addressType }) {
         return this.callApi(
             `/verify_aadhar_id_${this.productType}`,
             "POST",
@@ -268,7 +268,7 @@ class RedcarpetUpAPI extends Base{
                 pincode: pincode,
                 occupation: work,
                 address_type: addressType,
-                aadhar_no: aadhaarNumber,
+                aadhar_no: aadharNumber,
                 type: "generate",
                 email: email,
             },
@@ -450,14 +450,13 @@ class RedcarpetUpAPI extends Base{
         );
     }
 
-    setPin = function ({ phone, accessToken, kitNumber, otp, pin, expiryDate }) {
+    setPin = function ({ phone, accessToken, kitNumber, otp, pin,dob }) {
         return this.callApi(
             "/set_card_pin",
             "POST",
             {
                 pin: pin,
                 dob: moment(dob).format("DDMMYYYY"),
-                expiry_date: expiryDate,
                 otp: otp,
                 kit_no: kitNumber,
             },
