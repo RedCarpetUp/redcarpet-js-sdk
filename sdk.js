@@ -260,6 +260,31 @@ class RedcarpetUpAPI extends Base{
         );
     }
 
+    verifyMailOtp = function ({ phone, accessToken, otp }) {
+        return this.callApi(
+            `/verify_mail_otp`,
+            "POST",
+            {
+                otp
+            },
+            phone,
+            accessToken
+        );
+    }
+
+    generateyMailOtpToVerify = function ({ phone, accessToken, type,email }) {
+        return this.callApi(
+            `/send_verification_mail_otp_app`,
+            "POST",
+            {
+                type,
+                email,
+            },
+            phone,
+            accessToken
+        );
+    }
+
     generateAadhaarOtpToVerify = function ({ phone, accessToken, aadharNumber, pincode, work, email, addressType }) {
         return this.callApi(
             `/verify_aadhar_id_${this.productType}`,
@@ -315,6 +340,18 @@ class RedcarpetUpAPI extends Base{
             "GET",
             {
                 user_product_id: userProductId,
+            },
+            phone,
+            accessToken
+        );
+    }
+
+    getPhotoUploadDetails=function({phone,accessToken,documentType}){
+        return this.callApi(
+            `/photoupload${documentType === 'video' ? "?type=mp4" : ""}`,
+            "GET",
+            {
+        
             },
             phone,
             accessToken
@@ -425,6 +462,40 @@ class RedcarpetUpAPI extends Base{
         );
     }
 
+    getLatestPaymentStatus = function ({ phone, accessToken, paymentType }) {
+        return this.callApi(
+            "/check_latest_payment_status",
+            "GET",
+            {
+                payment_type:paymentType
+              },
+            phone,
+            accessToken
+        );
+    }
+
+    checkDeliveryFunnelStatus=function({phone,accessToken,productType}){
+        return this.callApi(
+            "/check_delivery_funnel_status",
+            "POST",
+            {
+                product_type: productType,
+              },
+            phone,
+            accessToken
+        );
+    }
+
+    getPaymentAmountForRedCarpet=function({phone,accessToken}){
+        return this.callApi(
+            "/check_payment_amount_for_redcarpet_gimbooks",
+            "GET",
+            { },
+            phone,
+            accessToken
+        );
+    }
+
     setCardSettings = function ({ phone, accessToken, kitNumber, currentDailySpendLimit, singleTxnLimit, currentDailyTxn }) {
         return this.callApi(
             "/set_card_settings",
@@ -498,6 +569,8 @@ class RedcarpetUpAPI extends Base{
             accessToken
         );
     }
+
+
 
 }
 
