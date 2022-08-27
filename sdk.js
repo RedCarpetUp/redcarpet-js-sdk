@@ -1,149 +1,39 @@
 "use strict";
-
-const axios = require("axios");
-const CryptoJS = require("crypto-js");
 const moment = require("moment");
+const callApi = require("./utility");
+
 class RedcarpetUpAPI {
   constructor(options) {
     const { apiKey, productType, appVersion, devMode } = options;
-    this.BASE_URL = devMode
+    const urlToUse = devMode
       ? "https://apicherry-v3.redcarpetup.com/"
       : "https://api.redcarpetup.com/";
+    this.BASE_URL = urlToUse;
     this.resourceId = apiKey || "";
     this.productType = productType || "";
     this.appVersion = appVersion || "";
-  }
-
-  //utilities method start here
-
-  formattedDate() {
-    const format = "YYYY-MM-DDTHH:mm:ss";
-    return moment().utc().format(format);
-  }
-
-  _hmac(key, value) {
-    return CryptoJS.HmacSHA256(
-      value.toString(CryptoJS.enc.Utf8),
-      key.toString(CryptoJS.enc.Utf8)
-    ).toString(CryptoJS.enc.Hex);
-  }
-
-  _sign(value, formattedDate, apiKey) {
-    return this._hmac(this._hmac(formattedDate, apiKey), value);
-  }
-
-  toQueryString(obj) {
-    let keys = Object.keys(obj);
-    keys.sort();
-    const parts = [];
-    for (let i in keys) {
-      const key = keys[i];
-      if (
-        obj.hasOwnProperty(key) &&
-        !!obj[key] &&
-        !!obj[key].toString().length
-      ) {
-        parts.push(
-          encodeURIComponent(key) +
-            "=" +
-            encodeURIComponent(obj[key]).replace(/%20/g, "+")
-        );
-      }
-    }
-    return parts.join("&");
-  }
-
-  checkStatus(response) {
-    if (response.status >= 200 && response.status < 300) {
-      return response;
-    } else {
-      const error = new Error(response.statusText);
-      error.response = response;
-      throw error;
-    }
-  }
-
-  callApi(
-    endpoint,
-    method = "get",
-    body = {},
-    mobile = this.phone,
-    accessToken = this.accessToken || "",
-    contentType = "application/json"
-  ) {
-    const baseUrl = this.BASE_URL;
-    const date = this.formattedDate();
-    let valueToHash;
-    if (method.toLowerCase() === "get") {
-      const query = this.toQueryString(body).length
-        ? "?" + this.toQueryString(body)
-        : "";
-      valueToHash = endpoint + query;
-    } else if (Object.prototype.toString.call(body) === "[object FormData]") {
-      valueToHash = body.get("hash");
-      body.delete("hash");
-    } else {
-      valueToHash = JSON.stringify(body);
-    }
-
-    const headers = {
-      Accept: "application/json",
-      "Content-Type": contentType,
-      mobile: mobile,
-      "RC-Timestamp": date,
-      "RC-HashV2": this._sign(valueToHash, date, accessToken),
-      resource_id: this.resourceId,
-      app_version: this.appVersion,
+    this.data = {
+      resourceId: apiKey || "",
+      appVersion: appVersion || "",
+      productType: productType || "",
+      baseUrl: urlToUse,
     };
-    if (endpoint === "/app_number" || endpoint === "/app_number_verify") {
-      delete headers["RC-HashV2"];
-    }
-    return axios({
-      method: method,
-      baseURL: baseUrl,
-      url: endpoint,
-      data: body,
-      params: method.toLowerCase() === "get" ? body : null,
-      paramsSerializer: this.toQueryString,
-      transformRequest: (data) => {
-        /* if form data, send as is */
-        if (Object.prototype.toString.call(data) === "[object FormData]") {
-          return data;
-        }
-        /** send array as is */
-        if (Object.prototype.toString.call(data) === "[object Array]") {
-          return JSON.stringify(data);
-        }
-        /** cut indexed keys from object */
-        const res = {};
-        Object.keys(data).forEach((key) => {
-          if (!Number(key)) {
-            res[key] = data[key];
-          }
-        });
-        return JSON.stringify(res);
-      },
-      headers,
-    })
-      .then(this.checkStatus)
-      .then((response) => response.data);
   }
 
   isOk() {
     console.log("i am working");
   }
 
-  //utilities methods end here
-
   getOtp({ phone }) {
-    return this.callApi(
+    return callApi(
       "/user_mobile_signup",
       "GET",
       {
         mobile: phone,
         resource_id: this.resourceId,
       },
-      phone
+      phone,
+      { ...this.data, phone }
     );
   }
 
@@ -156,15 +46,16 @@ class RedcarpetUpAPI {
         code: otp,
         resource_id: this.resourceId,
       },
-      phone
+      phone,
+      { ...this.data, phone }
     );
     if (response.result === "success") {
-      await this.callApi(
+      await callApi(
         "/set_branch_data",
         "POST",
         { skipReferral: true, utm_medium: this.productType },
-        phone,
-        response.access_token
+        "application/json",
+        { ...this.data, accessToken: response.accessToken }
       );
       return response;
     } else {
@@ -181,7 +72,7 @@ class RedcarpetUpAPI {
     phone,
     accessToken,
   }) {
-    return this.callApi(
+    return callApi(
       "/set_personal_info",
       "POST",
       {
@@ -190,42 +81,42 @@ class RedcarpetUpAPI {
         address_type: addressType,
         email: email,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getUserStatus = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       `/user_products_and_states/${this.productType}`,
       "GET",
       {},
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getUserCardDetails = function ({ phone, accessToken }) {
-    return this.callApi(
-      "/get_user_card_details",
-      "GET",
-      {},
-      phone,
-      accessToken
-    );
+    return callApi("/get_user_card_details", "GET", {}, "application/json", {
+      ...this.data,
+      accessToken,
+    });
   };
 
   getUserProfile = function ({ phone, accessToken }) {
-    return this.callApi("/get_new_user_profile", "GET", {}, phone, accessToken);
+    return callApi("/get_new_user_profile", "GET", {}, "application/json", {
+      ...this.data,
+      accessToken,
+    });
   };
 
   selectProduct = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       `/select_${this.productType}_as_a_product`,
       "GET",
       {},
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
@@ -236,7 +127,7 @@ class RedcarpetUpAPI {
     aadharNumber,
     clientId,
   }) {
-    return this.callApi(
+    return callApi(
       `/verify_aadhar_id_${this.productType}`,
       "POST",
       {
@@ -245,33 +136,33 @@ class RedcarpetUpAPI {
         client_id: clientId,
         aadhar_no: aadharNumber,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   verifyMailOtp = function ({ phone, accessToken, otp }) {
-    return this.callApi(
+    return callApi(
       `/verify_mail_otp`,
       "POST",
       {
         otp,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   generateyMailOtpToVerify = function ({ phone, accessToken, type, email }) {
-    return this.callApi(
+    return callApi(
       `/send_verification_mail_otp_app`,
       "POST",
       {
         type,
         email,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
@@ -284,7 +175,7 @@ class RedcarpetUpAPI {
     email,
     addressType,
   }) {
-    return this.callApi(
+    return callApi(
       `/verify_aadhar_id_${this.productType}`,
       "POST",
       {
@@ -295,74 +186,74 @@ class RedcarpetUpAPI {
         type: "generate",
         email: email,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   setUserPanCard = function ({ phone, pan, accessToken }) {
-    return this.callApi(
+    return callApi(
       `/set_pan_${this.productType}`,
       "POST",
       {
         pan,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   acceptUserAgreementEsign = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       `/accept_user_agreement_esign_${this.productType}`,
       "GET",
       {},
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   generateUserEsign = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       `/generate_user_esign_${this.productType}`,
       "GET",
       {},
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getUserDocuments = function ({ userProductId, phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       "/get_user_documents",
       "GET",
       {
         user_product_id: userProductId,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getPhotoUploadDetails = function ({ phone, accessToken, documentType }) {
-    return this.callApi(
+    return callApi(
       `/photoupload${documentType === "video" ? "?type=mp4" : ""}`,
       "GET",
       {},
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   userDocsToUpload = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       "/docs_for_upload",
       "GET",
       {
         docs_for: this.productType,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
@@ -376,7 +267,7 @@ class RedcarpetUpAPI {
     phone,
     accessToken,
   }) {
-    return this.callApi(
+    return callApi(
       `/set_user_profile_ids_${this.productType}`,
       "POST",
       {
@@ -389,13 +280,13 @@ class RedcarpetUpAPI {
         url: url,
         user_product_id: userProductId,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   confirmUserDocUpload = function ({ userProductId, phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       `/set_user_profile_ids_${this.productType}`,
       "POST",
       {
@@ -403,43 +294,43 @@ class RedcarpetUpAPI {
         product_type: this.productType,
         user_product_id: userProductId,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   activateUserCard = function ({ phone, accessToken, userProductId }) {
-    return this.callApi(
+    return callApi(
       `/create_activity_for_${this.productType}`,
       "POST",
       {
         product_id: userProductId,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getUserStatements = function ({ loanId, phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       "/get_statement/" + loanId,
       "GET",
       {
         source: "ledger",
         product_type: this.productType,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   sendBlockUnblockCardOtp = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       "/send_user_otp",
       "POST",
       { source_type: "lk_ul_card" },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
@@ -450,7 +341,7 @@ class RedcarpetUpAPI {
     kitNumber,
     otp,
   }) {
-    return this.callApi(
+    return callApi(
       "/card_operations_app",
       "POST",
       {
@@ -458,52 +349,52 @@ class RedcarpetUpAPI {
         card_kit_number: kitNumber,
         otp: otp,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getCardSettings = function ({ phone, accessToken, kitNumber }) {
-    return this.callApi(
+    return callApi(
       "/get_card_settings",
       "GET",
       { kit_number: kitNumber },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getLatestPaymentStatus = function ({ phone, accessToken, paymentType }) {
-    return this.callApi(
+    return callApi(
       "/check_latest_payment_status",
       "GET",
       {
         payment_type: paymentType,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   checkDeliveryFunnelStatus = function ({ phone, accessToken, productType }) {
-    return this.callApi(
+    return callApi(
       "/check_delivery_funnel_status",
       "POST",
       {
         product_type: productType,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   getPaymentAmountForRedCarpet = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       "/check_payment_amount_for_redcarpet_gimbooks",
       "GET",
       {},
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
@@ -515,7 +406,7 @@ class RedcarpetUpAPI {
     singleTxnLimit,
     currentDailyTxn,
   }) {
-    return this.callApi(
+    return callApi(
       "/set_card_settings",
       "POST",
       {
@@ -524,23 +415,23 @@ class RedcarpetUpAPI {
         single_txn_limit: singleTxnLimit,
         current_daily_spend_limit: currentDailySpendLimit,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   sendUserResetPinOtp = function ({ phone, accessToken }) {
-    return this.callApi(
+    return callApi(
       "/send_user_otp",
       "POST",
       { source_type: "card_cvv" },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
   setPin = function ({ phone, accessToken, kitNumber, otp, pin, dob }) {
-    return this.callApi(
+    return callApi(
       "/set_card_pin",
       "POST",
       {
@@ -549,8 +440,8 @@ class RedcarpetUpAPI {
         otp: otp,
         kit_no: kitNumber,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
@@ -562,7 +453,7 @@ class RedcarpetUpAPI {
     type,
     userProductId,
   }) {
-    return this.callApi(
+    return callApi(
       "/ledger_create_payment_request",
       "POST",
       {
@@ -575,8 +466,8 @@ class RedcarpetUpAPI {
           },
         },
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 
@@ -588,7 +479,7 @@ class RedcarpetUpAPI {
     razorpayPaymentId,
     razorpaySignature,
   }) {
-    return this.callApi(
+    return callApi(
       "/capture_razorpay_payment",
       "POST",
       {
@@ -597,8 +488,8 @@ class RedcarpetUpAPI {
         razorpay_signature: razorpaySignature,
         razorpay_order_id: razorpayOrderId,
       },
-      phone,
-      accessToken
+      "application/json",
+      { ...this.data, accessToken }
     );
   };
 }
