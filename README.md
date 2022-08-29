@@ -31,7 +31,7 @@ The resources can be accessed via the instance. All the methods invocations foll
 
 ```js
 // API signature
-// {razorpayInstance}.{resourceName}.{methodName}(resourceId [, params])
+// {redcarpt Instance}.{methodName}
 
 // example
 instance.getOtp({
