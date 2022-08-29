@@ -54,7 +54,7 @@ const callApi = (
   contentType = "application/json",
   data
 ) => {
-  const mobile = data.phone;
+  const mobile = data.phone || "";
   const accessToken = data.accessToken || "";
   const baseUrl = data.baseUrl;
   const date = formattedDate();

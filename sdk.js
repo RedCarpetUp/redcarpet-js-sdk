@@ -21,7 +21,13 @@ class RedcarpetUpAPI {
   }
 
   isOk() {
-    console.log("i am working");
+    return callApi(
+      "/test",
+      "GET",
+      {},
+      "application/json",
+      {...this.data}
+      );
   }
 
   getOtp({ phone }) {
@@ -32,7 +38,7 @@ class RedcarpetUpAPI {
         mobile: phone,
         resource_id: this.resourceId,
       },
-      phone,
+      "application/json",
       { ...this.data, phone }
     );
   }
@@ -46,7 +52,7 @@ class RedcarpetUpAPI {
         code: otp,
         resource_id: this.resourceId,
       },
-      phone,
+      "application/json",
       { ...this.data, phone }
     );
     if (response.result === "success") {
@@ -59,7 +65,6 @@ class RedcarpetUpAPI {
       );
       return response;
     } else {
-      console.log("error");
       throw new Error(response.message);
     }
   };
