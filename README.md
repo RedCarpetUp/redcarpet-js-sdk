@@ -18,7 +18,8 @@ Documentation of Redcarpet API and their usage
 Instantiate the redcarpet instance with `apiKey` , `productType` & `productVersion`. You can obtain the keys from the redcarpet website.
 
 ```js
-const RedcarpetUpAPI= require('redcarpetup-sdk');
+
+const RedcarpetUpAPI = require('rc_sdk_gm');
 
 var instance = new RedcarpetUpAPI({
     productType: "your-product-type",
