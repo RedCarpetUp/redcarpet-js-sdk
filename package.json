@@ -2,7 +2,7 @@
   "name": "rc-sdk-gm",
   "version": "2.0.1",
   "main": "dist/index.js",
-  "source": "lib/index.js",
+  "source": "index.js",
   "module": "dist/index.m.js",
   "unpkg": "dist/index.umd.js",
   "author": "Redcarpet Tech",
