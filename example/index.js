@@ -1,19 +1,10 @@
-const RedcarpetUpAPI = require('../lib/index');
+const RedcarpetUpAPI = require('../index');
 
-const RedcarpetUpAPI= require('redcarpetup-sdk');
-// console.log(RedcarpetUpAPI.isOk());
 const redcarpetUpApi = new RedcarpetUpAPI({
-    productType: "your-product-type",
-    apiKey: "api-key",
-    appVersion: "app-version",
+    productType: "your_product_type",
+    apiKey: "your_api_key",
 });
 
-redcarpetUpApi.isOk();
+redcarpetUpApi.isOk().then(console.log).catch(console.error);
 
-//there are two ways to call api
-redcarpetUpApi.getOtp()
-
-//the other way
-
-redcarpetUpApi.auth.getOtp();
-
+redcarpetUpApi.getOtp({ phone: "" }).then(console.log).catch(console.error);
