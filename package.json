@@ -1,5 +1,5 @@
 {
-  "name": "rc-sdk-gm",
+  "name": "rc_sdk_gm",
   "version": "2.0.1",
   "main": "dist/index.js",
   "source": "index.js",
