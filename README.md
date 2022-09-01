@@ -24,7 +24,6 @@ const RedcarpetUpAPI = require('rc_sdk_gm');
 var instance = new RedcarpetUpAPI({
     productType: "your-product-type",
     apiKey: "your-api-key",
-    appVersion: "app-version",
 });
 ```
 

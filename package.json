@@ -1,12 +1,34 @@
 {
-  "name": "redcarpetup-sdk",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "rc-sdk-gm",
+  "version": "2.0.1",
+  "main": "dist/index.js",
+  "source": "lib/index.js",
+  "module": "dist/index.m.js",
+  "unpkg": "dist/index.umd.js",
   "author": "Redcarpet Tech",
   "license": "MIT",
   "dependencies": {
     "axios": "^0.27.2",
     "crypto-js": "^4.1.1",
     "moment": "^2.29.3"
+  },
+  "description": "\"Redcarpet-sdk\"",
+  "directories": {
+    "example": "example",
+    "lib": "lib"
+  },
+  "scripts": {
+    "build": "rm -rf dist && microbundle"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RedCarpetUp/redcarpet-js-sdk.git"
+  },
+  "bugs": {
+    "url": "https://github.com/RedCarpetUp/redcarpet-js-sdk/issues"
+  },
+  "homepage": "https://github.com/RedCarpetUp/redcarpet-js-sdk#readme",
+  "devDependencies": {
+    "microbundle": "^0.15.1"
   }
 }
