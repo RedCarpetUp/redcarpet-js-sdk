@@ -1,5 +1,5 @@
 "use strict";
 
-const RedcarpetUpAPI = require("../sdk");
+const RedcarpetUpAPI = require("./lib/sdk");
 
 module.exports = RedcarpetUpAPI;
